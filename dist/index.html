@@ -516,6 +516,127 @@
   }
 
   option { background: #1c1c20; }
+
+  .log-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .log-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .log-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(16px);
+    transition: transform 0.2s;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+  .modal-overlay.open .log-modal { transform: translateY(0); }
+
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+  }
+
+  .log-body {
+    overflow-y: auto;
+    flex: 1;
+    margin-bottom: 20px;
+  }
+  .log-body::-webkit-scrollbar { width: 4px; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-date-heading {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .log-item {
+    display: grid;
+    grid-template-columns: 52px auto 1fr auto;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-item:last-child { border-bottom: none; }
+
+  .log-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .log-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .log-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .log-dur {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .log-empty {
+    text-align: center;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 32px 0;
+  }
+
+  .log-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .copy-btn {
+    flex: 1;
+    background: var(--accent2);
+    color: #0c0c0e;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { filter: brightness(1.1); }
+  .copy-btn.copied { background: var(--accent); }
 </style>
 </head>
 <body>
@@ -556,9 +677,12 @@
 
   <div class="timeline-header">
     <div class="section-title">// 타임라인</div>
-    <button class="add-btn" onclick="openModal()">
-      <span>+</span> 랩 추가
-    </button>
+    <div style="display:flex;gap:8px;">
+      <button class="log-btn" onclick="openLogModal()">오늘 기록 보기</button>
+      <button class="add-btn" onclick="openModal()">
+        <span>+</span> 랩 추가
+      </button>
+    </div>
   </div>
 
   <div class="timeline" id="timeline"></div>
@@ -600,6 +724,21 @@
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">취소</button>
       <button class="btn-primary" onclick="saveTask()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-overlay" id="logOverlay" onclick="handleLogOverlayClick(event)">
+  <div class="log-modal">
+    <div class="log-header">
+      <div class="modal-title" id="logTitle">오늘 기록</div>
+      <button class="btn-secondary" style="padding:6px 14px;font-size:11px;" onclick="closeLogModal()">닫기</button>
+    </div>
+    <div class="log-date-heading" id="logDateHeading"></div>
+    <div class="log-body" id="logBody"></div>
+    <div class="log-actions">
+      <button class="copy-btn" id="copyBtn" onclick="copyLog()">텍스트로 복사</button>
     </div>
   </div>
 </div>
@@ -913,10 +1052,82 @@
     });
   }
 
+  // ── 오늘 기록 모달 ───────────────────────────────────────
+  async function openLogModal() {
+    const today = new Date();
+    const todayKey = dateKey(today);
+    const laps = await invoke('get_laps', { date: todayKey });
+    const allTags = getAllTags();
+
+    const days = ['일','월','화','수','목','금','토'];
+    document.getElementById('logDateHeading').textContent =
+      `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')} (${days[today.getDay()]})`;
+
+    const body = document.getElementById('logBody');
+    body.innerHTML = '';
+
+    if (laps.length === 0) {
+      body.innerHTML = '<div class="log-empty">오늘 기록된 랩이 없습니다.</div>';
+    } else {
+      laps.sort((a, b) => a.hour - b.hour).forEach(lap => {
+        const tag = allTags[lap.tag] || { label: lap.tag, color: '#888' };
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `
+          <span class="log-time">${String(lap.hour).padStart(2,'0')}:00</span>
+          <span class="log-tag" style="background:${hexToRgba(tag.color,0.12)};color:${tag.color};border:1px solid ${tag.color}">${escHtml(tag.label)}</span>
+          <span class="log-text">${escHtml(lap.text)}</span>
+          <span class="log-dur">${formatDur(lap.duration)}</span>
+        `;
+        body.appendChild(item);
+      });
+    }
+
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.textContent = '텍스트로 복사';
+    copyBtn.classList.remove('copied');
+
+    document.getElementById('logOverlay').classList.add('open');
+  }
+
+  function closeLogModal() {
+    document.getElementById('logOverlay').classList.remove('open');
+  }
+
+  function handleLogOverlayClick(e) {
+    if (e.target === document.getElementById('logOverlay')) closeLogModal();
+  }
+
+  async function copyLog() {
+    const today = new Date();
+    const todayKey = dateKey(today);
+    const laps = await invoke('get_laps', { date: todayKey });
+    const allTags = getAllTags();
+    const days = ['일','월','화','수','목','금','토'];
+
+    if (laps.length === 0) return;
+
+    const header = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')} (${days[today.getDay()]}) 업무 기록`;
+    const lines = laps
+      .sort((a, b) => a.hour - b.hour)
+      .map(lap => {
+        const tag = allTags[lap.tag] || { label: lap.tag };
+        return `${String(lap.hour).padStart(2,'0')}:00  [${tag.label}]  ${lap.text}  (${formatDur(lap.duration)})`;
+      });
+
+    const text = [header, '─'.repeat(40), ...lines].join('\n');
+    await navigator.clipboard.writeText(text);
+
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '복사 완료!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '텍스트로 복사'; btn.classList.remove('copied'); }, 2000);
+  }
+
   // ── 초기화 ────────────────────────────────────────────────
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
-    if (e.key === 'n' && !document.getElementById('modalOverlay').classList.contains('open')) openModal();
+    if (e.key === 'Escape') { closeModal(); closeLogModal(); }
+    if (e.key === 'n' && !document.getElementById('modalOverlay').classList.contains('open') && !document.getElementById('logOverlay').classList.contains('open')) openModal();
   });
 
   async function init() {
