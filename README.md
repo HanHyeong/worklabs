@@ -2,7 +2,7 @@
 
 > 하루를 랩으로 기록하다
 
-하루의 업무를 시간대별로 간단하게 기록하는 macOS 데스크탑 앱입니다.
+하루의 업무를 시간대별로 간단하게 기록하는 데스크탑 앱입니다. (macOS / Windows)
 
 ![WorkLaps](src-tauri/icons/128x128@2x.png)
 
@@ -26,16 +26,16 @@
 
 - 메인 창 오른쪽 상단 **+ 랩 추가** 버튼
 - 타임라인의 빈 시간대 클릭
-- 단축키 `Cmd+Shift+L` → 퀵 등록 창
+- 글로벌 단축키로 퀵 등록 창 호출
 
 ### 퀵 등록
 
-| 방법 | 동작 |
-|------|------|
-| 트레이 아이콘 왼쪽 클릭 | 퀵 등록 창 열기/닫기 |
-| `Cmd+Shift+L` | 퀵 등록 창 열기/닫기 |
-| `Cmd+Enter` | 퀵 등록 창에서 저장 |
-| `Esc` | 퀵 등록 창 닫기 |
+| 방법 | macOS | Windows |
+|------|-------|---------|
+| 트레이 아이콘 왼쪽 클릭 | 퀵 등록 창 열기/닫기 | 퀵 등록 창 열기/닫기 |
+| 글로벌 단축키 | `Cmd+Shift+L` | `Ctrl+Shift+L` |
+| 퀵 등록 창에서 저장 | `Cmd+Enter` | `Ctrl+Enter` |
+| 퀵 등록 창 닫기 | `Esc` | `Esc` |
 
 ### 트레이 메뉴 (우클릭)
 
@@ -62,7 +62,8 @@
 
 - [Node.js](https://nodejs.org) 18 이상
 - [Rust](https://www.rust-lang.org/tools/install) (rustup)
-- Xcode Command Line Tools (macOS)
+- macOS: Xcode Command Line Tools
+- Windows: [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) 또는 Visual Studio
 
 ### 실행
 
@@ -86,9 +87,10 @@ npm run build
 
 ## 데이터 저장 위치
 
-```
-~/Library/Application Support/com.worklaps.desktop/worklaps.db
-```
+| OS | 경로 |
+|----|------|
+| macOS | `~/Library/Application Support/com.worklaps.desktop/worklaps.db` |
+| Windows | `C:\Users\{사용자명}\AppData\Roaming\com.worklaps.desktop\worklaps.db` |
 
 ---
 
