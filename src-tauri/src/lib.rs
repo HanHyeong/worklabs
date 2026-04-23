@@ -1,12 +1,12 @@
-use std::sync::Mutex;
-use rusqlite::{Connection, params};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
+use tauri::LogicalPosition;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, State, WindowEvent,
 };
-use tauri::LogicalPosition;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 // ── 모델 ────────────────────────────────────────────────────
@@ -43,21 +43,24 @@ fn hide_quick_add(app: tauri::AppHandle) {
 fn get_laps(state: State<DbState>, date: String) -> Result<Vec<Lap>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, date, hour, duration, tag, text FROM laps WHERE date = ?1 ORDER BY hour")
+        .prepare(
+            "SELECT id, date, hour, duration, tag, text FROM laps WHERE date = ?1 ORDER BY hour",
+        )
         .map_err(|e| e.to_string())?;
-    let result = stmt.query_map(params![date], |row| {
-        Ok(Lap {
-            id: row.get(0)?,
-            date: row.get(1)?,
-            hour: row.get(2)?,
-            duration: row.get(3)?,
-            tag: row.get(4)?,
-            text: row.get(5)?,
+    let result = stmt
+        .query_map(params![date], |row| {
+            Ok(Lap {
+                id: row.get(0)?,
+                date: row.get(1)?,
+                hour: row.get(2)?,
+                duration: row.get(3)?,
+                tag: row.get(4)?,
+                text: row.get(5)?,
+            })
         })
-    })
-    .map_err(|e| e.to_string())?
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| e.to_string());
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string());
     result
 }
 
@@ -87,16 +90,17 @@ fn get_custom_tags(state: State<DbState>) -> Result<Vec<CustomTag>, String> {
     let mut stmt = conn
         .prepare("SELECT id, label, color FROM custom_tags")
         .map_err(|e| e.to_string())?;
-    let result = stmt.query_map([], |row| {
-        Ok(CustomTag {
-            id: row.get(0)?,
-            label: row.get(1)?,
-            color: row.get(2)?,
+    let result = stmt
+        .query_map([], |row| {
+            Ok(CustomTag {
+                id: row.get(0)?,
+                label: row.get(1)?,
+                color: row.get(2)?,
+            })
         })
-    })
-    .map_err(|e| e.to_string())?
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| e.to_string());
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string());
     result
 }
 
@@ -193,6 +197,18 @@ pub fn run() {
                     }
                 });
 
+            // 윈도우 환경일 때 1.25배로 창 크기 조절 (UI Zoom 1.25 대응)
+            #[cfg(target_os = "windows")]
+            {
+                if let Some(main_win) = app.get_webview_window("main") {
+                    let _ = main_win.set_size(tauri::LogicalSize::new(1200.0, 1000.0));
+                    let _ = main_win.set_min_size(Some(tauri::LogicalSize::new(900.0, 750.0)));
+                }
+                if let Some(quick_add) = app.get_webview_window("quick-add") {
+                    let _ = quick_add.set_size(tauri::LogicalSize::new(475.0, 520.0));
+                }
+            }
+
             // 글로벌 단축키 macOS: Cmd+Shift+L, Windows/Linux: Ctrl+Shift+L → 퀵애드 토글
             let modifier = if cfg!(target_os = "macos") {
                 Modifiers::SUPER | Modifiers::SHIFT
@@ -200,29 +216,39 @@ pub fn run() {
                 Modifiers::CONTROL | Modifiers::SHIFT
             };
             let shortcut = Shortcut::new(Some(modifier), Code::KeyL);
-            app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, event| {
-                if event.state() == ShortcutState::Pressed {
-                    if let Some(popup) = app.get_webview_window("quick-add") {
-                        if popup.is_visible().unwrap_or(false) {
-                            let _ = popup.hide();
-                            return;
-                        }
-                        // 현재 마우스 위치 기반으로 해당 모니터 중앙에 배치
-                        if let Ok(cursor) = app.cursor_position() {
-                            if let Ok(Some(monitor)) = app.monitor_from_point(cursor.x, cursor.y) {
-                                let scale = monitor.scale_factor();
-                                let mpos  = monitor.position();
-                                let msize = monitor.size();
-                                let lx = mpos.x as f64 / scale + (msize.width  as f64 / scale - 380.0) / 2.0;
-                                let ly = mpos.y as f64 / scale + (msize.height as f64 / scale - 354.0) / 2.0;
-                                let _ = popup.set_position(LogicalPosition::new(lx, ly));
+            app.global_shortcut()
+                .on_shortcut(shortcut, |app, _shortcut, event| {
+                    if event.state() == ShortcutState::Pressed {
+                        if let Some(popup) = app.get_webview_window("quick-add") {
+                            if popup.is_visible().unwrap_or(false) {
+                                let _ = popup.hide();
+                                return;
                             }
+                            // 현재 마우스 위치 기반으로 해당 모니터 중앙에 배치
+                            if let Ok(cursor) = app.cursor_position() {
+                                if let Ok(Some(monitor)) =
+                                    app.monitor_from_point(cursor.x, cursor.y)
+                                {
+                                    let scale = monitor.scale_factor();
+                                    let mpos = monitor.position();
+                                    let msize = monitor.size();
+                                    let (pw, ph) = if cfg!(target_os = "windows") {
+                                        (475.0, 520.0)
+                                    } else {
+                                        (380.0, 354.0)
+                                    };
+                                    let lx = mpos.x as f64 / scale
+                                        + (msize.width as f64 / scale - pw) / 2.0;
+                                    let ly = mpos.y as f64 / scale
+                                        + (msize.height as f64 / scale - ph) / 2.0;
+                                    let _ = popup.set_position(LogicalPosition::new(lx, ly));
+                                }
+                            }
+                            let _ = popup.show();
+                            let _ = popup.set_focus();
                         }
-                        let _ = popup.show();
-                        let _ = popup.set_focus();
                     }
-                }
-            })?;
+                })?;
 
             // 트레이 메뉴
             let show_item = MenuItem::with_id(app, "show", "앱 표시", true, None::<&str>)?;
@@ -262,12 +288,21 @@ pub fn run() {
                                 let _ = popup.hide();
                                 return;
                             }
-                            if let Ok(Some(monitor)) = app.monitor_from_point(position.x, position.y) {
+                            if let Ok(Some(monitor)) =
+                                app.monitor_from_point(position.x, position.y)
+                            {
                                 let scale = monitor.scale_factor();
-                                let mpos  = monitor.position();
+                                let mpos = monitor.position();
                                 let msize = monitor.size();
-                                let lx = mpos.x as f64 / scale + (msize.width  as f64 / scale - 380.0) / 2.0;
-                                let ly = mpos.y as f64 / scale + (msize.height as f64 / scale - 354.0) / 2.0;
+                                let (pw, ph) = if cfg!(target_os = "windows") {
+                                    (475.0, 520.0)
+                                } else {
+                                    (380.0, 354.0)
+                                };
+                                let lx =
+                                    mpos.x as f64 / scale + (msize.width as f64 / scale - pw) / 2.0;
+                                let ly = mpos.y as f64 / scale
+                                    + (msize.height as f64 / scale - ph) / 2.0;
                                 let _ = popup.set_position(LogicalPosition::new(lx, ly));
                             }
                             let _ = popup.show();
