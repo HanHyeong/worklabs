@@ -518,9 +518,9 @@
   option { background: #1c1c20; }
 
   .log-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
+    background: rgba(53, 241, 168, 0.1);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     letter-spacing: 1px;
@@ -530,7 +530,7 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  .log-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .log-btn:hover { background: rgba(53, 241, 168, 0.2); }
 
   .log-modal {
     background: var(--surface);
@@ -1053,6 +1053,8 @@
   }
 
   // ── 오늘 기록 모달 ───────────────────────────────────────
+  let _logText = '';
+
   async function openLogModal() {
     const today = new Date();
     const todayKey = dateKey(today);
@@ -1060,16 +1062,19 @@
     const allTags = getAllTags();
 
     const days = ['일','월','화','수','목','금','토'];
-    document.getElementById('logDateHeading').textContent =
-      `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')} (${days[today.getDay()]})`;
+    const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')} (${days[today.getDay()]})`;
+    document.getElementById('logDateHeading').textContent = dateStr;
 
     const body = document.getElementById('logBody');
     body.innerHTML = '';
 
     if (laps.length === 0) {
       body.innerHTML = '<div class="log-empty">오늘 기록된 랩이 없습니다.</div>';
+      _logText = '';
     } else {
-      laps.sort((a, b) => a.hour - b.hour).forEach(lap => {
+      const sorted = laps.sort((a, b) => a.hour - b.hour);
+      const textLines = [`${dateStr} 업무 기록`, '─'.repeat(40)];
+      sorted.forEach(lap => {
         const tag = allTags[lap.tag] || { label: lap.tag, color: '#888' };
         const item = document.createElement('div');
         item.className = 'log-item';
@@ -1080,7 +1085,9 @@
           <span class="log-dur">${formatDur(lap.duration)}</span>
         `;
         body.appendChild(item);
+        textLines.push(`${String(lap.hour).padStart(2,'0')}:00  [${tag.label}]  ${lap.text}  (${formatDur(lap.duration)})`);
       });
+      _logText = textLines.join('\n');
     }
 
     const copyBtn = document.getElementById('copyBtn');
@@ -1098,25 +1105,15 @@
     if (e.target === document.getElementById('logOverlay')) closeLogModal();
   }
 
-  async function copyLog() {
-    const today = new Date();
-    const todayKey = dateKey(today);
-    const laps = await invoke('get_laps', { date: todayKey });
-    const allTags = getAllTags();
-    const days = ['일','월','화','수','목','금','토'];
-
-    if (laps.length === 0) return;
-
-    const header = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')} (${days[today.getDay()]}) 업무 기록`;
-    const lines = laps
-      .sort((a, b) => a.hour - b.hour)
-      .map(lap => {
-        const tag = allTags[lap.tag] || { label: lap.tag };
-        return `${String(lap.hour).padStart(2,'0')}:00  [${tag.label}]  ${lap.text}  (${formatDur(lap.duration)})`;
-      });
-
-    const text = [header, '─'.repeat(40), ...lines].join('\n');
-    await navigator.clipboard.writeText(text);
+  function copyLog() {
+    if (!_logText) return;
+    const ta = document.createElement('textarea');
+    ta.value = _logText;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
 
     const btn = document.getElementById('copyBtn');
     btn.textContent = '복사 완료!';
