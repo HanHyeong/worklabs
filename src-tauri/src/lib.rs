@@ -193,8 +193,13 @@ pub fn run() {
                     }
                 });
 
-            // 글로벌 단축키 Cmd+Shift+L → 퀵애드 토글
-            let shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyL);
+            // 글로벌 단축키 macOS: Cmd+Shift+L, Windows/Linux: Ctrl+Shift+L → 퀵애드 토글
+            let modifier = if cfg!(target_os = "macos") {
+                Modifiers::SUPER | Modifiers::SHIFT
+            } else {
+                Modifiers::CONTROL | Modifiers::SHIFT
+            };
+            let shortcut = Shortcut::new(Some(modifier), Code::KeyL);
             app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, event| {
                 if event.state() == ShortcutState::Pressed {
                     if let Some(popup) = app.get_webview_window("quick-add") {
