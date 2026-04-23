@@ -61,9 +61,30 @@
 ### 필수 조건
 
 - [Node.js](https://nodejs.org) 18 이상
-- [Rust](https://www.rust-lang.org/tools/install) (rustup)
+- Rust (rustup) — 아래 설치 방법 참고
 - macOS: Xcode Command Line Tools
 - Windows: [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) 또는 Visual Studio
+
+### Rust 설치 (rustup)
+
+**macOS / Linux**
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+설치 후 터미널을 재시작하거나 아래 명령으로 환경변수를 적용합니다.
+```bash
+source $HOME/.cargo/env
+```
+
+**Windows**
+
+1. [https://rustup.rs](https://rustup.rs) 에서 `rustup-init.exe` 다운로드 후 실행
+2. 설치 중 Microsoft C++ Build Tools 설치 안내가 나오면 함께 설치
+3. 설치 완료 후 새 터미널(PowerShell 또는 CMD)에서 확인
+```powershell
+rustc --version
+cargo --version
+```
 
 ### 실행
 
