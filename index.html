@@ -282,9 +282,24 @@
     align-items: center;
     gap: 10px;
     transition: background 0.15s;
-    cursor: default;
+    cursor: grab;
+    user-select: none;
   }
   .task-card:hover { background: var(--surface2); }
+  .task-card.lap-dragging { opacity: 0.35; }
+  .lap-ghost {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.85;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    border-radius: 0 8px 8px 0;
+  }
+  .hour-content.drag-over {
+    background: rgba(200,241,53,0.06);
+    outline: 1px dashed var(--accent);
+    border-radius: 6px;
+  }
 
   .task-tag {
     font-family: 'DM Mono', monospace;
@@ -627,6 +642,71 @@
   let editingId    = null;
   let selectedTag  = 'work';
 
+  // ── 드래그 상태 ──────────────────────────────────────────────
+  let dragState = null; // { lapId, ghost, sourceCard, offsetX, offsetY }
+
+  function startLapDrag(e, task, card) {
+    if (e.button !== 0) return;
+    if (e.target.tagName === 'BUTTON') return;
+    e.preventDefault();
+
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.className = 'task-card lap-ghost';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.borderLeftColor = card.style.borderLeftColor;
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top  = rect.top  + 'px';
+    document.body.appendChild(ghost);
+
+    card.classList.add('lap-dragging');
+    dragState = {
+      lapId: task.id,
+      ghost,
+      sourceCard: card,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+    };
+  }
+
+  document.addEventListener('mousemove', e => {
+    if (!dragState) return;
+    const { ghost, offsetX, offsetY } = dragState;
+    ghost.style.left = (e.clientX - offsetX) + 'px';
+    ghost.style.top  = (e.clientY - offsetY) + 'px';
+
+    ghost.style.display = 'none';
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    ghost.style.display = '';
+
+    document.querySelectorAll('.hour-content.drag-over')
+      .forEach(el => el.classList.remove('drag-over'));
+    const hc = target && target.closest('.hour-content');
+    if (hc) hc.classList.add('drag-over');
+  });
+
+  document.addEventListener('mouseup', async e => {
+    if (!dragState) return;
+    const { lapId, ghost, sourceCard } = dragState;
+    dragState = null;
+
+    ghost.style.display = 'none';
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    ghost.remove();
+    sourceCard.classList.remove('lap-dragging');
+    document.querySelectorAll('.hour-content.drag-over')
+      .forEach(el => el.classList.remove('drag-over'));
+
+    const hc = target && target.closest('.hour-content');
+    if (!hc) return;
+    const targetHour = parseInt(hc.dataset.hour);
+    const lap = currentLaps.find(t => t.id === lapId);
+    if (!lap || lap.hour === targetHour) return;
+    await invoke('upsert_lap', { lap: { ...lap, hour: targetHour } });
+    await reloadLaps();
+    render();
+  });
+
   // ── DB 헬퍼 ───────────────────────────────────────────────
   function invoke(cmd, args = {}) {
     return window.__TAURI__
@@ -880,6 +960,7 @@
 
       const content = document.createElement('div');
       content.className = 'hour-content';
+      content.dataset.hour = h;
 
       if (hourTasks.length === 0) {
         const slot = document.createElement('div');
@@ -902,6 +983,7 @@
               <button class="task-btn edit" title="수정" onclick="openEditModal('${task.id}')">✎</button>
               <button class="task-btn" title="삭제" onclick="deleteTask('${task.id}')">✕</button>
             </div>`;
+          card.addEventListener('mousedown', e => startLapDrag(e, task, card));
           content.appendChild(card);
         });
         const addMore = document.createElement('button');
