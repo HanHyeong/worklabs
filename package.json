@@ -1,9 +1,10 @@
 {
   "name": "worklaps",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "dev": "tauri dev",
     "build": "tauri build",
     "vite:dev": "vite",
