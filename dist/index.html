@@ -209,96 +209,103 @@
   }
   .add-btn:hover { background: #d8ff45; transform: translateY(-1px); }
 
-  .timeline { display: flex; flex-direction: column; gap: 2px; }
-
-  .hour-row {
-    display: grid;
-    grid-template-columns: 56px 1fr;
-    align-items: stretch;
-    min-height: 52px;
-  }
+  /* GANTT TIMELINE — 단일 position:relative 컨테이너 */
+  .timeline { position: relative; }
 
   .hour-label {
+    position: absolute;
+    width: 56px;
+    box-sizing: border-box;
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     color: var(--muted);
     text-align: right;
     border-right: 1px solid var(--border);
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding: 18px 12px 16px 4px;
+    padding: 8px 12px 0 4px;
   }
+  .hour-label.current { color: var(--accent); }
 
-  .hour-content {
-    padding: 6px 0 6px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    position: relative;
-  }
-
-  .hour-content::before {
-    content: '';
+  .hour-line {
     position: absolute;
-    left: -1px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
+    left: 0; right: 0;
+    height: 1px;
     background: var(--border);
-    border-radius: 50%;
+    pointer-events: none;
   }
 
-  .hour-row.has-task .hour-content::before {
-    background: var(--accent);
-    box-shadow: 0 0 8px rgba(200,241,53,0.5);
-  }
-
-  .empty-slot {
-    height: 40px;
-    border-radius: 6px;
-    border: 1px dashed var(--border);
+  .hour-cell {
+    position: absolute;
+    left: 56px; right: 0;
     cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
+    transition: background 0.15s;
+    box-sizing: border-box;
+  }
+  .hour-cell:hover { background: rgba(255,255,255,0.015); }
+  .hour-cell.drag-over {
+    background: rgba(200,241,53,0.05);
+    outline: 1px dashed rgba(200,241,53,0.5);
+    outline-offset: -2px;
   }
 
-  .hour-row:hover .empty-slot { opacity: 1; border-color: var(--accent); }
-  .empty-slot:hover { background: rgba(200,241,53,0.05); }
-  .empty-slot-icon { font-size: 16px; color: var(--accent); opacity: 0.5; }
+  .hour-dot {
+    position: absolute;
+    left: 55px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transform: translateX(-50%) translateY(-50%);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .hour-dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(200,241,53,0.5); }
+  .hour-dot.current { background: var(--accent); box-shadow: 0 0 10px rgba(200,241,53,0.8); width: 8px; height: 8px; }
 
-  /* TASK CARD */
-  .task-card {
+  /* LAP BLOCK */
+  .lap-block {
+    position: absolute;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
+    border-left: 3px solid;
     border-radius: 0 8px 8px 0;
-    padding: 10px 14px;
+    padding: 0 14px;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: background 0.15s;
     cursor: grab;
     user-select: none;
+    overflow: hidden;
+    transition: background 0.15s;
+    box-sizing: border-box;
+    z-index: 3;
   }
-  .task-card:hover { background: var(--surface2); }
-  .task-card.lap-dragging { opacity: 0.35; }
+  .lap-block:hover { background: var(--surface2); }
+  .lap-block:hover .task-actions { opacity: 1; }
+  .lap-block.lap-dragging { opacity: 0.35; }
+
   .lap-ghost {
-    position: fixed;
+    position: fixed !important;
     pointer-events: none;
-    opacity: 0.85;
+    opacity: 0.88;
     z-index: 9999;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    border-radius: 0 8px 8px 0;
   }
-  .hour-content.drag-over {
-    background: rgba(200,241,53,0.06);
-    outline: 1px dashed var(--accent);
-    border-radius: 6px;
+
+  .now-indicator {
+    position: absolute;
+    left: 56px; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .now-indicator::before {
+    content: '';
+    position: absolute;
+    left: -4px; top: -3px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
   }
 
   .task-tag {
@@ -314,8 +321,7 @@
   .task-text { font-size: 13px; color: var(--text); flex: 1; line-height: 1.4; }
   .task-dur { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); flex-shrink: 0; }
 
-  .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
-  .task-card:hover .task-actions { opacity: 1; }
+  .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
 
   .task-btn {
     background: none;
@@ -332,12 +338,7 @@
   .task-btn:hover { border-color: var(--danger); color: var(--danger); }
   .task-btn.edit:hover { border-color: var(--accent2); color: var(--accent2); }
 
-  .hour-row.current-hour .hour-label { color: var(--accent); }
-  .hour-row.current-hour .hour-content::before {
-    background: var(--accent);
-    box-shadow: 0 0 10px rgba(200,241,53,0.8);
-    width: 8px; height: 8px;
-  }
+  /* current-hour → .hour-label.current / .hour-dot.current 으로 처리 */
 
   /* PROGRESS */
   .progress-bar {
@@ -759,7 +760,8 @@
 </div>
 
 <script>
-  const HOURS = Array.from({length: 16}, (_, i) => i + 7);
+  const HOURS      = Array.from({length: 16}, (_, i) => i + 7);
+  const ROW_HEIGHT = 60;
 
   const CUSTOM_PALETTE = [
     '#e879f9','#fb923c','#a78bfa','#f472b6','#34d399',
@@ -791,8 +793,9 @@
 
     const rect = card.getBoundingClientRect();
     const ghost = card.cloneNode(true);
-    ghost.className = 'task-card lap-ghost';
-    ghost.style.width = rect.width + 'px';
+    ghost.className = 'lap-block lap-ghost';
+    ghost.style.width  = '280px';
+    ghost.style.height = '44px';
     ghost.style.borderLeftColor = card.style.borderLeftColor;
     ghost.style.left = rect.left + 'px';
     ghost.style.top  = rect.top  + 'px';
@@ -805,7 +808,18 @@
       sourceCard: card,
       offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
+      targetHour: null,
     };
+  }
+
+  function getHourFromY(clientY) {
+    const tl = document.getElementById('timeline');
+    if (!tl) return null;
+    const rect = tl.getBoundingClientRect();
+    const relY = clientY - rect.top;
+    if (relY < 0 || relY > rect.height) return null;
+    const idx = Math.floor(relY / ROW_HEIGHT);
+    return HOURS[Math.min(Math.max(idx, 0), HOURS.length - 1)];
   }
 
   document.addEventListener('mousemove', e => {
@@ -814,31 +828,28 @@
     ghost.style.left = (e.clientX - offsetX) + 'px';
     ghost.style.top  = (e.clientY - offsetY) + 'px';
 
-    ghost.style.display = 'none';
-    const target = document.elementFromPoint(e.clientX, e.clientY);
-    ghost.style.display = '';
+    const targetHour = getHourFromY(e.clientY);
+    dragState.targetHour = targetHour;
 
-    document.querySelectorAll('.hour-content.drag-over')
+    document.querySelectorAll('.hour-cell.drag-over')
       .forEach(el => el.classList.remove('drag-over'));
-    const hc = target && target.closest('.hour-content');
-    if (hc) hc.classList.add('drag-over');
+    if (targetHour !== null) {
+      const cell = document.querySelector(`.hour-cell[data-hour="${targetHour}"]`);
+      if (cell) cell.classList.add('drag-over');
+    }
   });
 
   document.addEventListener('mouseup', async e => {
     if (!dragState) return;
-    const { lapId, ghost, sourceCard } = dragState;
+    const { lapId, ghost, sourceCard, targetHour } = dragState;
     dragState = null;
 
-    ghost.style.display = 'none';
-    const target = document.elementFromPoint(e.clientX, e.clientY);
     ghost.remove();
     sourceCard.classList.remove('lap-dragging');
-    document.querySelectorAll('.hour-content.drag-over')
+    document.querySelectorAll('.hour-cell.drag-over')
       .forEach(el => el.classList.remove('drag-over'));
 
-    const hc = target && target.closest('.hour-content');
-    if (!hc) return;
-    const targetHour = parseInt(hc.dataset.hour);
+    if (targetHour === null) return;
     const lap = currentLaps.find(t => t.id === lapId);
     if (!lap || lap.hour === targetHour) return;
     await invoke('upsert_lap', { lap: { ...lap, hour: targetHour } });
@@ -1084,59 +1095,98 @@
 
     const timeline = document.getElementById('timeline');
     timeline.innerHTML = '';
+    const FIRST   = HOURS[0];
+    const TOTAL_H = HOURS.length * ROW_HEIGHT;
+    timeline.style.height = TOTAL_H + 'px';
 
-    HOURS.forEach(h => {
-      const hourTasks = tasks.filter(t => t.hour === h);
-      const isCurrent = isToday && now.getHours() === h;
+    // ── PASS 1: 그리드 선 + 레이블 + 클릭셀 ──────────────────
+    HOURS.forEach((h, idx) => {
+      const isCurrent   = isToday && now.getHours() === h;
+      const hasCoverage = tasks.some(t => t.hour <= h && t.hour + t.duration / 60 > h);
+      const topPx       = idx * ROW_HEIGHT;
 
-      const row = document.createElement('div');
-      row.className = `hour-row${hourTasks.length ? ' has-task' : ''}${isCurrent ? ' current-hour' : ''}`;
+      const line = document.createElement('div');
+      line.className = 'hour-line';
+      line.style.top = topPx + 'px';
+      timeline.appendChild(line);
 
       const label = document.createElement('div');
-      label.className = 'hour-label';
-      label.textContent = String(h).padStart(2,'0');
-      row.appendChild(label);
+      label.className = 'hour-label' + (isCurrent ? ' current' : '');
+      label.style.top    = topPx + 'px';
+      label.style.height = ROW_HEIGHT + 'px';
+      label.textContent  = String(h).padStart(2, '0');
+      timeline.appendChild(label);
 
-      const content = document.createElement('div');
-      content.className = 'hour-content';
-      content.dataset.hour = h;
+      const dot = document.createElement('div');
+      dot.className = 'hour-dot' + (isCurrent ? ' current' : hasCoverage ? ' active' : '');
+      dot.style.top = (topPx + ROW_HEIGHT / 2) + 'px';
+      timeline.appendChild(dot);
 
-      if (hourTasks.length === 0) {
-        const slot = document.createElement('div');
-        slot.className = 'empty-slot';
-        slot.innerHTML = `<span class="empty-slot-icon">+</span>`;
-        slot.onclick = () => openModal(h);
-        content.appendChild(slot);
-      } else {
-        hourTasks.forEach(task => {
-          const tagDef = allTags[task.tag] || { label: task.tag, color: '#888' };
-          const card = document.createElement('div');
-          card.className = 'task-card';
-          card.style.borderLeftColor = tagDef.color;
-          const tagBg = hexToRgba(tagDef.color, 0.12);
-          card.innerHTML = `
-            <span class="task-tag" style="background:${tagBg};color:${tagDef.color};border-color:${tagDef.color}">${escHtml(tagDef.label)}</span>
-            <span class="task-text">${escHtml(task.text)}</span>
-            <span class="task-dur">${formatDur(task.duration)}</span>
-            <div class="task-actions">
-              <button class="task-btn edit" title="수정" onclick="openEditModal('${task.id}')">✎</button>
-              <button class="task-btn" title="삭제" onclick="deleteTask('${task.id}')">✕</button>
-            </div>`;
-          card.addEventListener('mousedown', e => startLapDrag(e, task, card));
-          content.appendChild(card);
-        });
-        const addMore = document.createElement('button');
-        addMore.style.cssText = 'background:none;border:none;color:var(--muted);font-family:"DM Mono",monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:2px 0 4px 2px;opacity:0;transition:opacity 0.15s;';
-        addMore.textContent = '+ 추가';
-        addMore.onclick = () => openModal(h);
-        content.addEventListener('mouseenter', () => addMore.style.opacity = '1');
-        content.addEventListener('mouseleave', () => addMore.style.opacity = '0');
-        content.appendChild(addMore);
-      }
-
-      row.appendChild(content);
-      timeline.appendChild(row);
+      const cell = document.createElement('div');
+      cell.className = 'hour-cell';
+      cell.dataset.hour = h;
+      cell.style.top    = topPx + 'px';
+      cell.style.height = ROW_HEIGHT + 'px';
+      cell.onclick = () => openModal(h);
+      timeline.appendChild(cell);
     });
+    const lastLine = document.createElement('div');
+    lastLine.className = 'hour-line';
+    lastLine.style.top = TOTAL_H + 'px';
+    timeline.appendChild(lastLine);
+
+    // ── PASS 2: 랩 블록 (간트 바) ─────────────────────────────
+    function assignColumns(laps) {
+      const items = laps.map(lap => ({ lap, col: 0 }));
+      const cols  = [];
+      for (const item of items) {
+        const end = item.lap.hour + item.lap.duration / 60;
+        let placed = false;
+        for (let ci = 0; ci < cols.length; ci++) {
+          const overlaps = cols[ci].some(l => item.lap.hour < l.hour + l.duration / 60 && end > l.hour);
+          if (!overlaps) { cols[ci].push(item.lap); item.col = ci; placed = true; break; }
+        }
+        if (!placed) { cols.push([item.lap]); item.col = cols.length - 1; }
+      }
+      return items.map(item => {
+        const end = item.lap.hour + item.lap.duration / 60;
+        const totalCols = items.filter(o =>
+          item.lap.hour < o.lap.hour + o.lap.duration / 60 && end > o.lap.hour
+        ).length;
+        return { ...item, totalCols };
+      });
+    }
+
+    const layoutItems = assignColumns(tasks);
+    const GAP     = 4;
+    const LABEL_W = 64;
+
+    layoutItems.forEach(({ lap, col, totalCols }) => {
+      const tagDef = allTags[lap.tag] || { label: lap.tag, color: '#888' };
+      const tagBg  = hexToRgba(tagDef.color, 0.12);
+      const top    = (lap.hour - FIRST) * ROW_HEIGHT + 2;
+      const height = Math.max((lap.duration / 60) * ROW_HEIGHT - 4, 24);
+
+      const block = document.createElement('div');
+      block.className = 'lap-block';
+      block.style.top             = top + 'px';
+      block.style.height          = height + 'px';
+      // 콘텐츠 영역(레이블 이후)을 totalCols 등분하여 col 번째에 배치
+      block.style.left  = `calc(${LABEL_W + GAP}px + ${col / totalCols} * (100% - ${LABEL_W}px))`;
+      block.style.width = `calc((100% - ${LABEL_W}px) / ${totalCols} - ${GAP * 2}px)`;
+      block.style.borderLeftColor = tagDef.color;
+      block.innerHTML = `
+        <span class="task-tag" style="background:${tagBg};color:${tagDef.color};border-color:${tagDef.color}">${escHtml(tagDef.label)}</span>
+        <span class="task-text">${escHtml(lap.text)}</span>
+        <span class="task-dur">${formatDur(lap.duration)}</span>
+        <div class="task-actions">
+          <button class="task-btn edit" title="수정" onclick="openEditModal('${lap.id}')">✎</button>
+          <button class="task-btn" title="삭제" onclick="deleteTask('${lap.id}')">✕</button>
+        </div>`;
+      block.addEventListener('mousedown', e => startLapDrag(e, lap, block));
+      timeline.appendChild(block);
+    });
+
   }
 
   // ── 오늘 기록 모달 ───────────────────────────────────────
