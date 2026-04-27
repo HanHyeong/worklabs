@@ -1,0 +1,25 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0c0e;
+  --surface: #141416;
+  --surface2: #1c1c20;
+  --border: #2a2a30;
+  --accent: #c8f135;
+  --accent2: #35f1a8;
+  --text: #e8e8ec;
+  --muted: #5a5a6a;
+  --danger: #ff4d6d;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+option { background: #1c1c20; }
