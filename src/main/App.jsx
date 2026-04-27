@@ -109,7 +109,7 @@ export default function App() {
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--muted)', letterSpacing: 2, textTransform: 'uppercase' }}>
               하루를 랩으로 기록하다
             </div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'var(--muted)', letterSpacing: 1, opacity: 0.6 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: '#f5c542', letterSpacing: 1 }}>
               v{__APP_VERSION__}
             </div>
           </div>
