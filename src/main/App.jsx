@@ -105,7 +105,7 @@ export default function App() {
           <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, letterSpacing: 4, color: 'var(--accent)', lineHeight: 1, textShadow: '0 0 40px rgba(200,241,53,0.3)' }}>
             WORK<span style={{ color: 'var(--muted)' }}>LAPS</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'var(--muted)', letterSpacing: 2, textTransform: 'uppercase' }}>
               하루를 랩으로 기록하다
             </div>
