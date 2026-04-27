@@ -72,8 +72,6 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
   }, [onDropLap])
 
   const layoutItems = assignColumns(laps)
-  const nowPct = isToday ? ((now.getHours() + now.getMinutes() / 60 - HOURS[0]) / HOURS.length) * 100 : null
-
   return (
     <div style={{ position: 'relative', height: totalH }} ref={timelineRef}>
       {HOURS.map((h, idx) => {
@@ -135,20 +133,6 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
 
       <div style={{ position: 'absolute', left: 0, right: 0, top: totalH, height: 1, background: 'var(--border)', pointerEvents: 'none' }} />
 
-      {nowPct !== null && (
-        <div style={{
-          position: 'absolute',
-          left: 56, right: 0,
-          top: `${nowPct}%`,
-          height: 2,
-          background: 'var(--accent)',
-          opacity: 0.7,
-          pointerEvents: 'none',
-          zIndex: 4,
-        }}>
-          <div style={{ position: 'absolute', left: -4, top: -3, width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
-        </div>
-      )}
 
       {layoutItems.map(({ lap, col, totalCols }) => {
         const tagDef = allTags[lap.tag] || { label: lap.tag, color: '#888' }
