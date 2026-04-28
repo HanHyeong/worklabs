@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
-import { HOURS, BUILTIN_TAGS } from '../shared/constants'
+import { HOURS, BUILTIN_TAGS, DURATIONS, DUR_LABELS } from '../shared/constants'
 import TagPicker from '../shared/TagPicker'
-
-const DURATIONS = [30, 60, 90, 120, 180, 240]
-const DUR_LABELS = { 30: '30분', 60: '1시간', 90: '1시간 30분', 120: '2시간', 180: '3시간', 240: '4시간' }
 
 export default function LapModal({ open, editLap, defaultHour, customTags, onSave, onClose, onCreateTag, onDeleteTag }) {
   const [text, setText] = useState('')

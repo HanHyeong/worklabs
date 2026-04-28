@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { listen } from '../shared/tauri'
-import { dateKey, formatDate } from '../shared/utils'
+import { dateKey, formatDate, mergedMins } from '../shared/utils'
 import { useLaps } from './useLaps'
 import { useCustomTags } from './useCustomTags'
 import Timeline from './Timeline'
@@ -76,6 +76,11 @@ export default function App() {
     await reloadLaps(currentDate)
   }
 
+  async function handleChangeDuration(lap, duration) {
+    await upsert({ ...lap, duration })
+    await reloadLaps(currentDate)
+  }
+
   async function changeDay(delta) {
     setCurrentDate(prev => {
       const d = new Date(prev)
@@ -88,8 +93,8 @@ export default function App() {
   const todayKey = dateKey(now)
   const isToday = dateKey(currentDate) === todayKey
 
-  const totalMins = laps.reduce((s, t) => s + t.duration, 0)
-  const focusMins = laps.filter(t => t.tag !== 'break').reduce((s, t) => s + t.duration, 0)
+  const totalMins = mergedMins(laps)
+  const focusMins = mergedMins(laps.filter(t => t.tag !== 'break'))
   const totalHoursStr = totalMins >= 60 ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m` : `${totalMins}m`
   const focusRate = totalMins > 0 ? Math.round(focusMins / totalMins * 100) + '%' : '—'
   const dayProgress = isToday
@@ -161,6 +166,7 @@ export default function App() {
           onEdit={openEditModal}
           onDelete={remove}
           onDropLap={handleDrop}
+          onChangeDuration={handleChangeDuration}
         />
       </div>
 

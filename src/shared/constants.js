@@ -13,3 +13,6 @@ export const CUSTOM_PALETTE = [
   '#e879f9','#fb923c','#a78bfa','#f472b6','#34d399',
   '#60a5fa','#fbbf24','#f87171','#4ade80','#38bdf8',
 ]
+
+export const DURATIONS = [30, 60, 90, 120, 180, 240]
+export const DUR_LABELS = { 30: '30분', 60: '1시간', 90: '1시간 30분', 120: '2시간', 180: '3시간', 240: '4시간' }

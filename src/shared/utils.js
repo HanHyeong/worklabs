@@ -31,6 +31,22 @@ export function nextCustomColor(customTags, palette) {
   return palette[Object.keys(customTags).length % palette.length]
 }
 
+// Merge overlapping lap intervals and return total minutes (no double-counting)
+export function mergedMins(laps) {
+  if (laps.length === 0) return 0
+  const intervals = laps
+    .map(l => [l.hour * 60, l.hour * 60 + l.duration])
+    .sort((a, b) => a[0] - b[0])
+  let total = 0
+  let [curStart, curEnd] = intervals[0]
+  for (let i = 1; i < intervals.length; i++) {
+    const [start, end] = intervals[i]
+    if (start < curEnd) { curEnd = Math.max(curEnd, end) }
+    else { total += curEnd - curStart; curStart = start; curEnd = end }
+  }
+  return total + (curEnd - curStart)
+}
+
 // Gantt overlap column assignment
 export function assignColumns(laps) {
   const items = laps.map(lap => ({ lap, col: 0 }))
