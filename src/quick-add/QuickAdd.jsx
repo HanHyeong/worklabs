@@ -42,6 +42,7 @@ export default function QuickAdd() {
   useEffect(() => {
     function onFocus() {
       everFocused.current = true
+      setHour(Math.max(7, Math.min(22, new Date().getHours())))
       textareaRef.current?.focus()
     }
     function onBlur() {
