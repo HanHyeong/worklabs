@@ -238,6 +238,20 @@ pub fn run() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
                         if let Some(w) = app.get_webview_window("main") {
+                            if let Ok(cursor) = app.cursor_position() {
+                                if let Ok(Some(monitor)) = app.monitor_from_point(cursor.x, cursor.y) {
+                                    let scale = monitor.scale_factor();
+                                    let mpos  = monitor.position();
+                                    let msize = monitor.size();
+                                    if let Ok(outer) = w.outer_size() {
+                                        let win_w = outer.width  as f64 / scale;
+                                        let win_h = outer.height as f64 / scale;
+                                        let lx = mpos.x as f64 / scale + (msize.width  as f64 / scale - win_w) / 2.0;
+                                        let ly = mpos.y as f64 / scale + (msize.height as f64 / scale - win_h) / 2.0;
+                                        let _ = w.set_position(LogicalPosition::new(lx, ly));
+                                    }
+                                }
+                            }
                             let _ = w.show();
                             let _ = w.set_focus();
                             if let Some(qa) = app.get_webview_window("quick-add") {
