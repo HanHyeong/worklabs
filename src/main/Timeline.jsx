@@ -15,6 +15,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
   const [dragOverHour, setDragOverHour] = useState(null)
   const [durationPopover, setDurationPopover] = useState(null)
   const [hoverCard, setHoverCard] = useState(null) // { lap, rect }
+  const [hoveredLabelHour, setHoveredLabelHour] = useState(null)
 
   const now = new Date()
   const todayKey = dateKey(now)
@@ -112,10 +113,13 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
         const hasCoverage = laps.some(t => t.hour <= h && t.hour + t.duration / 60 > h)
         const topPx = idx * ROW_HEIGHT
 
+        const isLabelHovered = hoveredLabelHour === h
         return (
           <div key={h}>
             <div style={{ position: 'absolute', left: 0, right: 0, top: topPx, height: 1, background: 'var(--border)', pointerEvents: 'none' }} />
             <div
+              onMouseEnter={() => setHoveredLabelHour(h)}
+              onMouseLeave={() => setHoveredLabelHour(null)}
               style={{
                 position: 'absolute',
                 width: 56,
@@ -128,8 +132,38 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
                 borderRight: '1px solid var(--border)',
                 padding: '8px 12px 0 4px',
                 boxSizing: 'border-box',
+                cursor: 'default',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                justifyContent: 'flex-start',
+                paddingTop: 8,
               }}
-            >{String(h).padStart(2, '0')}</div>
+            >
+              <span style={{ lineHeight: 1 }}>{String(h).padStart(2, '0')}</span>
+              {isLabelHovered && (
+                <button
+                  onClick={() => onCellClick(h)}
+                  style={{
+                    marginTop: 4,
+                    background: 'none',
+                    border: '1px solid var(--border)',
+                    color: 'var(--accent)',
+                    width: 18,
+                    height: 18,
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    lineHeight: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >+</button>
+              )}
+            </div>
             <div
               style={{
                 position: 'absolute',
@@ -147,13 +181,11 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
             />
             <div
               data-hour={h}
-              onClick={() => onCellClick(h)}
               style={{
                 position: 'absolute',
                 left: 56, right: 0,
                 top: topPx,
                 height: ROW_HEIGHT,
-                cursor: 'pointer',
                 background: dragOverHour === h ? 'rgba(200,241,53,0.05)' : 'transparent',
                 outline: dragOverHour === h ? '1px dashed rgba(200,241,53,0.5)' : 'none',
                 outlineOffset: -2,
