@@ -23,3 +23,5 @@ body {
 }
 
 option { background: #1c1c20; }
+
+.lap-block:active { background: var(--surface); }

@@ -195,6 +195,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
               gap: isCompact ? 6 : 10,
               cursor: 'grab',
               userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
               overflow: 'hidden',
               boxSizing: 'border-box',
               zIndex: 3,
