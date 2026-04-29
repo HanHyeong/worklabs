@@ -13,6 +13,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
   const hoverTimerRef = useRef(null)
   const [ghostStyle, setGhostStyle] = useState(null)
   const [dragOverHour, setDragOverHour] = useState(null)
+  const [draggingId, setDraggingId] = useState(null)
   const [durationPopover, setDurationPopover] = useState(null)
   const [hoverCard, setHoverCard] = useState(null) // { lap, rect }
   const [hoveredLabelHour, setHoveredLabelHour] = useState(null)
@@ -71,6 +72,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
         const dy = e.clientY - startY
         if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return
         dragRef.current.hasMoved = true
+        setDraggingId(dragRef.current.lap.id)
         setGhostStyle({ left: cardRect.left, top: cardRect.top, width: 280, height: 44, borderLeftColor: cardColor })
       }
       setGhostStyle(prev => prev && ({ ...prev, left: e.clientX - offsetX, top: e.clientY - offsetY }))
@@ -81,6 +83,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
       const { lap, hasMoved } = dragRef.current
       const targetHour = getHourFromY(e.clientY)
       dragRef.current = null
+      setDraggingId(null)
       setGhostStyle(null)
       setDragOverHour(null)
       if (hasMoved && targetHour !== null && lap.hour !== targetHour) {
@@ -200,7 +203,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
 
       {layoutItems.map(({ lap, col, totalCols }) => {
         const tagDef = allTags[lap.tag] || { label: lap.tag, color: '#888' }
-        const isDragging = dragRef.current?.lap?.id === lap.id
+        const isDragging = draggingId === lap.id
         const isCompact = totalCols >= 2
         const top = (lap.hour - HOURS[0]) * ROW_HEIGHT + 2
         const height = Math.max((lap.duration / 60) * ROW_HEIGHT - 4, 24)
