@@ -40,7 +40,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
   }
 
   function closeHoverCard() {
-    hoverTimerRef.current = setTimeout(() => setHoverCard(null), 120)
+    hoverTimerRef.current = setTimeout(() => setHoverCard(null), 300)
   }
 
   function startDrag(e, lap, card) {
@@ -288,8 +288,8 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
       {hoverCard && (() => {
         const { lap, rect } = hoverCard
         const tagDef = allTags[lap.tag] || { label: lap.tag, color: '#888' }
-        const fitsRight = rect.right + 10 + HOVER_CARD_W <= window.innerWidth - 8
-        const hPos = fitsRight ? { left: rect.right + 10 } : { right: window.innerWidth - rect.left + 10 }
+        const fitsRight = rect.right + 4 + HOVER_CARD_W <= window.innerWidth - 8
+        const hPos = fitsRight ? { left: rect.right + 4 } : { right: window.innerWidth - rect.left + 4 }
         const topPos = Math.min(rect.top, window.innerHeight - 180)
         return (
           <div
