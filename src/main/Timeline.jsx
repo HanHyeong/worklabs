@@ -11,6 +11,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
   const timelineRef = useRef(null)
   const dragRef = useRef(null)
   const hoverTimerRef = useRef(null)
+  const hoverOpenTimerRef = useRef(null)
   const [ghostStyle, setGhostStyle] = useState(null)
   const [dragOverHour, setDragOverHour] = useState(null)
   const [draggingId, setDraggingId] = useState(null)
@@ -36,10 +37,18 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
   function openHoverCard(lap, e) {
     if (dragRef.current) return
     clearTimeout(hoverTimerRef.current)
-    setHoverCard({ lap, rect: e.currentTarget.getBoundingClientRect() })
+    clearTimeout(hoverOpenTimerRef.current)
+    const rect = e.currentTarget.getBoundingClientRect()
+    if (!hoverCard) {
+      setHoverCard({ lap, rect })
+    } else {
+      // 이미 카드가 열려 있으면 딜레이 후 전환 (지나가는 랩은 무시)
+      hoverOpenTimerRef.current = setTimeout(() => setHoverCard({ lap, rect }), 200)
+    }
   }
 
   function closeHoverCard() {
+    clearTimeout(hoverOpenTimerRef.current)
     hoverTimerRef.current = setTimeout(() => setHoverCard(null), 300)
   }
 
@@ -293,7 +302,7 @@ export default function Timeline({ laps, customTags, currentDate, onCellClick, o
         const topPos = Math.min(rect.top, window.innerHeight - 180)
         return (
           <div
-            onMouseEnter={() => clearTimeout(hoverTimerRef.current)}
+            onMouseEnter={() => { clearTimeout(hoverTimerRef.current); clearTimeout(hoverOpenTimerRef.current) }}
             onMouseLeave={closeHoverCard}
             style={{
               position: 'fixed',
